@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartMove - Intelligent Public Transportation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .hero-bg {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c3e50 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('resources/hero-city-transit.jpg') center/cover;
+            opacity: 0.3;
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .route-planner {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .transit-card {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .transit-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(78, 205, 196, 0.3);
+        }
+        
+        .stats-counter {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #4ecdc4;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #4ecdc4;
+            border-radius: 1px;
+        }
+        
+        .mode-selector {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .mode-selector:hover {
+            transform: scale(1.05);
+        }
+        
+        .mode-selector.active {
+            background: #4ecdc4;
+            color: white;
+        }
+        
+        #particles-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <img src="resources/company-logo.png" alt="SmartMove Logo" class="h-10 w-10">
+                    <span class="text-xl font-bold text-white">SmartMove</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="nav-link active text-white font-medium">Home</a>
+                    <a href="services.html" class="nav-link text-white font-medium">Services</a>
+                    <a href="about.html" class="nav-link text-white font-medium">About</a>
+                    <a href="contact.html" class="nav-link text-white font-medium">Contact</a>
+                </div>
+                <button class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg min-h-screen flex items-center relative">
+        <canvas id="particles-canvas"></canvas>
+        <div class="hero-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="text-white">
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+                        <span class="block" data-splitting>Smart</span>
+                        <span class="block text-4ecdc4" data-splitting>Transportation</span>
+                        <span class="block" data-splitting>Revolution</span>
+                    </h1>
+                    <div class="text-xl mb-8 h-16">
+                        <span id="typed-text"></span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="scrollToRoutePlanner()" class="bg-4ecdc4 hover:bg-44a08d text-white px-8 py-4 rounded-full font-semibold transition-all duration-300 transform hover:scale-105">
+                            Plan Your Route
+                        </button>
+                        <button onclick="scrollToServices()" class="border-2 border-white text-white hover:bg-white hover:text-gray-800 px-8 py-4 rounded-full font-semibold transition-all duration-300">
+                            Explore Services
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Live Transit Dashboard -->
+                <div class="glass-effect rounded-2xl p-6 text-white">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <div class="pulse-dot w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                        Live Transit Status
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                                <div class="font-semibold">Metro Line A</div>
+                                <div class="text-sm opacity-80">Downtown → Airport</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-400 font-bold">On Time</div>
+                                <div class="text-sm opacity-80">2 min</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                                <div class="font-semibold">Bus Route 42</div>
+                                <div class="text-sm opacity-80">Central Station</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-yellow-400 font-bold">Delayed</div>
+                                <div class="text-sm opacity-80">5 min</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                                <div class="font-semibold">Bike Share</div>
+                                <div class="text-sm opacity-80">City Center</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-400 font-bold">Available</div>
+                                <div class="text-sm opacity-80">24 bikes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Route Planner Section -->
+    <section id="route-planner" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Plan Your Smart Journey</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Experience the future of urban mobility with our AI-powered route optimization. 
+                    Compare transport modes, calculate costs, and reduce your carbon footprint.
+                </p>
+            </div>
+            
+            <div class="route-planner p-8 max-w-4xl mx-auto">
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- Route Input -->
+                    <div class="lg:col-span-2">
+                        <div class="space-y-6">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">From</label>
+                                    <input type="text" id="from-location" placeholder="Enter starting point" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-4ecdc4 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">To</label>
+                                    <input type="text" id="to-location" placeholder="Enter destination" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-4ecdc4 focus:border-transparent">
+                                </div>
+                            </div>
+                            
+                            <!-- Transport Modes -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Transport Modes</label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div class="mode-selector p-3 border-2 border-gray-200 rounded-lg text-center" data-mode="bus">
+                                        <div class="text-2xl mb-1">🚌</div>
+                                        <div class="text-sm font-medium">Bus</div>
+                                    </div>
+                                    <div class="mode-selector p-3 border-2 border-gray-200 rounded-lg text-center" data-mode="metro">
+                                        <div class="text-2xl mb-1">🚇</div>
+                                        <div class="text-sm font-medium">Metro</div>
+                                    </div>
+                                    <div class="mode-selector p-3 border-2 border-gray-200 rounded-lg text-center" data-mode="bike">
+                                        <div class="text-2xl mb-1">🚴</div>
+                                        <div class="text-sm font-medium">Bike</div>
+                                    </div>
+                                    <div class="mode-selector p-3 border-2 border-gray-200 rounded-lg text-center" data-mode="walk">
+                                        <div class="text-2xl mb-1">🚶</div>
+                                        <div class="text-sm font-medium">Walk</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button onclick="calculateRoute()" class="w-full bg-1e3a5f hover:bg-2c3e50 text-white py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                                Find Best Route
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Route Results -->
+                    <div id="route-results" class="space-y-4">
+                        <div class="text-center text-gray-500 py-8">
+                            <div class="text-4xl mb-4">🗺️</div>
+                            <p>Enter your route to see options</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transportation Modes -->
+    <section id="services" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Smart Transportation Solutions</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Discover our comprehensive suite of intelligent mobility solutions designed to transform urban transportation.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="transit-card p-6 text-white floating-element">
+                    <img src="resources/smart-bus.jpg" alt="Smart Bus" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Smart Bus Network</h3>
+                    <p class="text-sm opacity-90 mb-4">AI-optimized routes with real-time tracking and predictive maintenance.</p>
+                    <div class="flex justify-between text-sm">
+                        <span>⚡ Electric Fleet</span>
+                        <span>📍 GPS Tracking</span>
+                    </div>
+                </div>
+                
+                <div class="transit-card p-6 text-white floating-element" style="animation-delay: 0.5s;">
+                    <img src="resources/metro-station.jpg" alt="Metro System" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Metro Rail</h3>
+                    <p class="text-sm opacity-90 mb-4">High-capacity urban transit with automated scheduling and crowd management.</p>
+                    <div class="flex justify-between text-sm">
+                        <span>🚇 Automated</span>
+                        <span>👥 High Capacity</span>
+                    </div>
+                </div>
+                
+                <div class="transit-card p-6 text-white floating-element" style="animation-delay: 1s;">
+                    <img src="resources/bike-sharing.jpg" alt="Bike Sharing" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Bike Sharing</h3>
+                    <p class="text-sm opacity-90 mb-4">Dockless micro-mobility with smart locks and app-based access.</p>
+                    <div class="flex justify-between text-sm">
+                        <span>🔓 Smart Locks</span>
+                        <span>📱 App Control</span>
+                    </div>
+                </div>
+                
+                <div class="transit-card p-6 text-white floating-element" style="animation-delay: 1.5s;">
+                    <img src="resources/traffic-control.jpg" alt="Traffic Management" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold mb-2">Smart Traffic AI</h3>
+                    <p class="text-sm opacity-90 mb-4">Adaptive traffic signals and congestion prediction for optimal flow.</p>
+                    <div class="flex justify-between text-sm">
+                        <span>🤖 AI Control</span>
+                        <span>📊 Real-time Data</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 text-center">
+                <div class="floating-element">
+                    <div class="stats-counter" data-count="2.5">0</div>
+                    <div class="text-gray-600">Million Daily Riders</div>
+                </div>
+                <div class="floating-element" style="animation-delay: 0.3s;">
+                    <div class="stats-counter" data-count="45">0</div>
+                    <div class="text-gray-600">% Traffic Reduction</div>
+                </div>
+                <div class="floating-element" style="animation-delay: 0.6s;">
+                    <div class="stats-counter" data-count="85">0</div>
+                    <div class="text-gray-600">% On-Time Performance</div>
+                </div>
+                <div class="floating-element" style="animation-delay: 0.9s;">
+                    <div class="stats-counter" data-count="30">0</div>
+                    <div class="text-gray-600">% CO₂ Reduction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Environmental Impact -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-bold text-gray-900 mb-6">Sustainable Urban Mobility</h2>
+                    <p class="text-xl text-gray-600 mb-8">
+                        Our smart transportation solutions are designed with sustainability at their core. 
+                        By optimizing routes, reducing congestion, and promoting eco-friendly transport modes, 
+                        we're creating cleaner, more livable cities.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Reduced carbon emissions by 30%</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Energy-efficient electric fleet</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Smart traffic optimization</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-8 shadow-lg">
+                    <div id="carbon-chart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <img src="resources/company-logo.png" alt="SmartMove Logo" class="h-8 w-8">
+                    <span class="text-2xl font-bold">SmartMove</span>
+                </div>
+                <p class="text-gray-400 mb-6">Intelligent Public Transportation Systems</p>
+                <div class="border-t border-gray-800 pt-6">
+                    <p class="text-gray-500 text-sm">
+                        © 2024 SmartMove Transportation Systems. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>
